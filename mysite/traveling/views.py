@@ -1,11 +1,24 @@
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
+from .models import*
+
 
 # Create your views here.
 
 
+# def index(request):
+#     return HttpResponse('Путешествуй, Беларусь!')
+
+menu = ['Информация о сайте','Добавить статью','Обратная связь','Войти']
+
 def index(request):
-    return HttpResponse('Путешествуй, Беларусь!')
+    posts = Traveling.objects.all()
+    return render(request, 'traveling/index.html', {'posts': posts,'menu':menu, 'title':'Путешествуй, Беларусь!'})
+
+
+def about(request):
+    return render(request, 'traveling/about.html', {'menu':menu, 'title': 'Информация о сайте'})
+
 
 def categories(request, catid):
     return HttpResponse(f'<h1>Категории</h1><p>{catid}</p>')
