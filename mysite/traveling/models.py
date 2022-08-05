@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 
@@ -13,4 +14,7 @@ class Traveling(models.Model):
 
     def __str__(self): # выводит названия статей при выборке Traveling.objects.all()
         return self.title
+
+    def get_absolut_url(self):
+        return reverse('post', kwargs={'post_id':self.pk})
 
