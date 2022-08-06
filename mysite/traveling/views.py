@@ -1,5 +1,5 @@
-from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseNotFound, Http404
+from django.shortcuts import render, get_object_or_404
 from .models import*
 
 
@@ -20,10 +20,14 @@ menu = [
 
 def index(request):
     posts = Traveling.objects.all()
+    cats = Category.objects.all()
+
     context = {
         'posts': posts,
+        'cats': cats,
         'menu': menu,
-        'title': 'Путешествуй, Беларусь!'
+        'title': 'Путешествуй, Беларусь!',
+        'cat_selected':0,
     }
     return render(request, 'traveling/index.html', context=context)
 
@@ -41,16 +45,42 @@ def contact(request):
 def login(request):
     return HttpResponse('Авторизация')
 
+def pageNotFound(request, exception):
+    return HttpResponseNotFound('')
+
 def show_post(request, post_id):
-    return HttpResponse(f'Отображение статьи с id= {post_id}')
+    post = get_object_or_404(Traveling, pk=post_id)
+    cats = Category.objects.all()
+
+    context = {
+        'post': post,
+        'cats': cats,
+        'menu': menu,
+        'title': post.title,
+        'cat_selected': post.cat_id,
+    }
+
+    return render(request, 'traveling/post.html', context=context)
 
 
-# def categories(request, catid):
-#     return HttpResponse(f'<h1>Категории</h1><p>{catid}</p>')
+def show_category(request, cat_id):
+    posts = Traveling.objects.filter(cat_id=cat_id)
+    cats = Category.objects.all()
+
+    if len(posts)== 0:
+        raise Http404('Увы, страница не найдена:(')
+
+    context = {
+        'posts': posts,
+        'cats': cats,
+        'menu': menu,
+        'title': 'Отображение по категориям...',
+        'cat_selected': cat_id,
+    }
+    return render(request, 'traveling/index.html', context=context)
 
 
 
-# def pageNotFound(request, exception):
-#     return HttpResponseNotFound('<h1> Увы, страница не найдена :( </h1>')
+
 
 
