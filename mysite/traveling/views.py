@@ -1,10 +1,15 @@
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
 
 from .forms import*
 from .models import*
+from .utils import *
 
 
 # Create your views here.
@@ -13,20 +18,10 @@ from .models import*
 # def index(request):
 #     return HttpResponse('Путешествуй, Беларусь!')
 
-# menu = ['Информация о сайте','Добавить статью','Обратная связь','Войти']
-menu = [
-    {'title': 'Информация о сайте', 'url_name': 'about'},
-    {'title': 'Добавить статью', 'url_name':'add_page'},
-    {'title': 'Обратная связь', 'url_name': 'contact'},
-    {'title': 'Войти', 'url_name': 'login'}
-
-]
 
 
 
-
-
-class TravelingHome(ListView):
+class TravelingHome(DataMixin, ListView):
     model = Traveling
     template_name = 'traveling/index.html'
     context_object_name = 'posts'
@@ -34,11 +29,8 @@ class TravelingHome(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Путешествуй, Буларусь!'
-        context['cat_selected'] = 0
-        context['menu'] = menu
-
-        return context
+        c_def = self.get_user_context(title='Путешествуй, Беларусь!')
+        return dict(list(context.items()) + list(c_def.items()))
 
     def get_queryset(self):
         return Traveling.objects.filter(is_published= True) #выведет на экран лишь те статьи, которые отмечены опубликованными
@@ -63,16 +55,16 @@ def about(request):
 
 
 
-class AddPage(CreateView):
+class AddPage(LoginRequiredMixin, DataMixin, CreateView): #только для авторизованных пользователей
     form_class = AddPostForm
     template_name = 'traveling/addpage.html'
     success_url = reverse_lazy('home')
+    login_url = '/admin/'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Добавление статьи'
-        context['menu'] = menu
-        return context
+        c_def = self.get_user_context(title='Добавление статьи')
+        return dict(list(context.items())+ list(c_def.items()))
 
 # def addpage(request):
 #     if request.method == 'POST':
@@ -86,7 +78,7 @@ class AddPage(CreateView):
 #     return render(request, 'traveling/addpage.html', {'form':form,'menu':menu, 'title':'Добавление статьи'})
 
 
-
+@login_required #только для зарегистрированных пользователей
 def contact(request):
     return HttpResponse('Обратная связь')
 
@@ -97,7 +89,7 @@ def pageNotFound(request, exception):
     return HttpResponseNotFound('')
 
 
-class ShowPost(DetailView):
+class ShowPost(DataMixin, DetailView):
     model = Traveling
     template_name = 'traveling/post.html'
     slug_url_kwarg = 'post_slug'
@@ -105,8 +97,7 @@ class ShowPost(DetailView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = context['post']
-        context['menu'] = menu
+        c_def = self.get_user_context(title=context['post'])
         return context
 
 
@@ -127,21 +118,19 @@ class ShowPost(DetailView):
 
 
 
-class TravelingCategory(ListView):
+class TravelingCategory(DataMixin, ListView):
     model = Traveling
     template_name = 'traveling/index.html'
     context_object_name = 'posts'
     allow_empty = False
 
     def get_queryset(self):
-        return Traveling.object.filter(cat__slug=self.kwargs['cat_slug'], is_published=True)
+        return Traveling.objects.filter(cat__slug=self.kwargs['cat_slug'], is_published=True)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Категория -' + str(context['posts'][0].cat)
-        context['menu'] = menu
-        context['cat_selected'] = context['posts'][0].cat_id
-        return context
+        c_def = self.get_user_context(title='Категория -' + str(context['posts'][0].cat), cat_selected=context['posts'][0].cat_id)
+        return dict(list(context.items()) + list(c_def.items()))
 
 # def show_category(request, cat_id):
 #     posts = Traveling.objects.filter(cat_id=cat_id)
