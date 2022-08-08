@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 from mysite import settings
-from traveling.views import index
+# from traveling.views import index
 from django.urls import path, include
 
 
