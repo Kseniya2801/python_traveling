@@ -36,7 +36,7 @@ class TravelingHome(DataMixin, ListView):
         return dict(list(context.items()) + list(c_def.items()))
 
     def get_queryset(self):
-        return Traveling.objects.filter(is_published= True) #выведет на экран лишь те статьи, которые отмечены опубликованными
+        return Traveling.objects.filter(is_published=True).select_related('cat') #выведет на экран лишь те статьи, которые отмечены опубликованными
 
 
 # def index(request):
@@ -67,7 +67,7 @@ class AddPage(LoginRequiredMixin, DataMixin, CreateView): #только для �
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         c_def = self.get_user_context(title='Добавление статьи')
-        return dict(list(context.items())+ list(c_def.items()))
+        return dict(list(context.items())+list(c_def.items()))
 
 # def addpage(request):
 #     if request.method == 'POST':
@@ -130,11 +130,12 @@ class TravelingCategory(DataMixin, ListView):
     allow_empty = False
 
     def get_queryset(self):
-        return Traveling.objects.filter(cat__slug=self.kwargs['cat_slug'], is_published=True)
+        return Traveling.objects.filter(cat__slug=self.kwargs['cat_slug'], is_published=True).select_related('cat')
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        c_def = self.get_user_context(title='Категория -' + str(context['posts'][0].cat), cat_selected=context['posts'][0].cat_id)
+        c = Category.objects.get(slug=self.kwargs['cat_slug'])
+        c_def = self.get_user_context(title='Категория -' + str(c.name), cat_selected=c.pk)
         return dict(list(context.items()) + list(c_def.items()))
 
 # def show_category(request, cat_id):
